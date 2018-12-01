@@ -7,6 +7,7 @@ ENV OPENSSL_VERSION 1.1.1a
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && OPENSSL_SHA256=fc20130f8b7cbd2fb918b2f14e2f429e109c31ddd0fb38fc5d71d9ffed3f9f41 \
+    && NGINX_CT_TAG=93e9884764b77300236fd878ae284f2a40314f38 \
 	&& CONFIG="\
 		--prefix=/etc/nginx \
 		--sbin-path=/usr/sbin/nginx \
@@ -51,11 +52,13 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		--with-compat \
 		--with-file-aio \
 		--with-http_v2_module \
+		--add-dynamic-module=../nginx-ct \
 		--with-openssl=openssl-$OPENSSL_VERSION \
 	" \
 	&& addgroup -g 82 -S nginx \
 	&& adduser -u 82 -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
 	&& apk add --no-cache --virtual .build-deps \
+	    git \
 		gcc \
 		libc-dev \
 		make \
@@ -90,6 +93,9 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& rm nginx.tar.gz \
 	&& tar -zxC /usr/src/nginx-$NGINX_VERSION -f openssl-$OPENSSL_VERSION.tar.gz \
 	&& rm openssl-$OPENSSL_VERSION.tar.gz \
+	&& git clone https://github.com/grahamedgecombe/nginx-ct /usr/src/nginx-ct \
+	&& cd /usr/src/nginx-ct \
+	&& git checkout --detach $NGINX_CT_TAG \
 	&& cd /usr/src/nginx-$NGINX_VERSION \
 	&& cd openssl-$OPENSSL_VERSION \
 	&& ./config \
